@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from .terrain import generate_reference_and_limits
 
@@ -75,8 +76,17 @@ class Mission:
 
     @classmethod
     def from_csv(cls, file_name: str):
-        # You are required to implement this method
-        pass
+        """Return a Mission built from a CSV file.
+
+        The CSV must contain the columns ``reference``, ``cave_height``
+        and ``cave_depth`` (as written by terrain.write_mission_to_csv).
+        """
+        data = pd.read_csv(file_name)
+        return cls(
+            reference=data["reference"].to_numpy(),
+            cave_height=data["cave_height"].to_numpy(),
+            cave_depth=data["cave_depth"].to_numpy(),
+        )
 
 
 class ClosedLoop:
@@ -97,7 +107,7 @@ class ClosedLoop:
         for t in range(T):
             positions[t] = self.plant.get_position()
             observation_t = self.plant.get_depth()
-            # Call your controller here
+            actions[t] = self.controller(mission.reference[t], observation_t)
             self.plant.transition(actions[t], disturbances[t])
 
         return Trajectory(positions)
